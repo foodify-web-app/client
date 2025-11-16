@@ -1,0 +1,86 @@
+@import 'tailwindcss';
+
+@theme inline {
+  --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  
+  /* Primary Colors */
+  --color-primary: #FF6B35;
+  --color-primary-light: #FF8555;
+  --color-primary-dark: #E55A2B;
+  
+  /* Neutral Colors */
+  --color-background: #FFFFFF;
+  --color-surface: #F8F8F8;
+  --color-surface-secondary: #F0F0F0;
+  --color-foreground: #1A1A1A;
+  --color-foreground-secondary: #666666;
+  --color-border: #E5E5E5;
+  
+  /* Dark Mode */
+  --color-dark-background: #0F0F0F;
+  --color-dark-surface: #1A1A1A;
+  --color-dark-surface-secondary: #252525;
+  --color-dark-foreground: #FFFFFF;
+  --color-dark-foreground-secondary: #B0B0B0;
+  
+  /* Accent Colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+  
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * {
+    @apply transition-colors duration-200;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  .dark {
+    @apply bg-dark-background text-dark-foreground;
+  }
+}
+
+@layer components {
+  .glassmorphism {
+    @apply backdrop-blur-md bg-white/10 border border-white/20;
+  }
+
+  .dark .glassmorphism {
+    @apply bg-white/5 border-white/10;
+  }
+
+  .card-base {
+    @apply rounded-2xl bg-surface shadow-sm transition-all duration-300;
+  }
+
+  .dark .card-base {
+    @apply bg-dark-surface shadow-lg;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 bg-primary text-white rounded-full font-semibold hover:bg-primary-dark transition-all duration-300 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-surface text-foreground rounded-full font-semibold border border-border hover:bg-surface-secondary transition-all duration-300;
+  }
+
+  .dark .btn-secondary {
+    @apply bg-dark-surface text-dark-foreground border-white/10 hover:bg-dark-surface-secondary;
+  }
+
+  .input-base {
+    @apply w-full px-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all;
+  }
+
+  .dark .input-base {
+    @apply bg-dark-surface border-white/10 focus:border-primary;
+  }
+}

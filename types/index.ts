@@ -1,0 +1,62 @@
+export interface Restaurant {
+  id: string;
+  name: string;
+  image: string;
+  rating: number;
+  deliveryTime: string;
+  deliveryFee: number;
+  cuisineTypes: string[];
+  isOpen: boolean;
+  offers?: string;
+}
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  rating: number;
+  restaurantId: string;
+  category: string;
+  isVegetarian: boolean;
+}
+
+export interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+  restaurantId: string;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  addresses: Address[];
+}
+
+export interface Address {
+  id: string;
+  label: string;
+  address: string;
+  city: string;
+  zipCode: string;
+  isDefault: boolean;
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  restaurantId: string;
+  items: CartItem[];
+  status: 'placed' | 'preparing' | 'out-for-delivery' | 'delivered';
+  totalAmount: number;
+  deliveryAddress: Address;
+  paymentMethod: string;
+  createdAt: Date;
+  estimatedDelivery: Date;
+}
