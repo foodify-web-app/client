@@ -1,34 +1,34 @@
 'use client';
 
 import React, { createContext, useContext, useState } from 'react';
-import { User } from '@/types';
-
+import { User, UserRes } from '@/types';
 interface AuthContextType {
-  user: User | null;
+  user: UserRes | null;
   isAuthenticated: boolean;
-  login: (user: User) => void;
+  login: (user: UserRes) => void;
   logout: () => void;
-  signup: (user: User) => void;
+  signup: (user: UserRes) => void;
 }
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserRes | null>(null);
 
-  const login = (userData: User) => {
+  const login = (userData: UserRes) => {
     setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('token', userData.token);
+    localStorage.setItem('userId', userData.userId);
   };
 
-  const logout = () => {
+  const logout = async () => {
     setUser(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
   };
 
-  const signup = (userData: User) => {
+  const signup = (userData: UserRes) => {
     setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    // localStorage.setItem('t', JSON.stringify(userData));
   };
 
   return (

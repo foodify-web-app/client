@@ -8,6 +8,8 @@ import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/components/ui/toaster';
 import { useRouter } from 'next/navigation';
 
+import { loginUser } from '@/api/api';
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,20 +25,17 @@ export default function LoginPage() {
       toast({ message: 'Please fill all fields', type: 'error' });
       return;
     }
-    
+
     setIsLoading(true);
-    setTimeout(() => {
-      login({
-        id: '1',
-        name: 'User',
-        email,
-        phone: '+1234567890',
-        addresses: [],
-      });
-      toast({ message: 'Login successful!', type: 'success' });
-      router.push('/');
-      setIsLoading(false);
-    }, 1000);
+    // setTimeout(() => {
+    const res = await loginUser({ email, password });
+    console.log(res.data);
+
+    login(res.data);
+    toast({ message: `Login successful!`, type: 'success' });
+    router.push('/');
+    setIsLoading(false);
+    // }, 1000);
   };
 
   return (
