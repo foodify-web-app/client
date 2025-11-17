@@ -39,6 +39,13 @@ export interface User {
   addresses: Address[];
 }
 
+export interface UserRes { 
+  token: string, 
+  userId: string, 
+  success: string, 
+  role: string 
+}
+
 export interface Address {
   id: string;
   label: string;

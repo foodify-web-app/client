@@ -8,12 +8,26 @@ import { useAuth } from '@/context/auth-context';
 import { motion } from 'framer-motion';
 import { MobileCartDrawer } from './mobile-cart-drawer';
 import ThemeToggle from './ThemeToggle';
+import { logoutUser } from '@/api/api';
+import { useToast } from '@/components/ui/toaster';
+
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { items } = useCart();
   const { isAuthenticated, logout } = useAuth();
+  const { toast } = useToast();
   const cartCount = items.length;
+
+  const logoutHandler = async () => {
+    const res = await logoutUser();
+
+    if (!res.data.success) {
+      toast({ message: 'Error while logout', type: 'error' })
+    }
+    logout();
+    toast({ message: 'Logout Successful', type: 'success' })
+  }
 
   return (
     <>
@@ -67,7 +81,7 @@ export function Navbar() {
               {/* User Menu - Desktop */}
               {isAuthenticated ? (
                 <button
-                  onClick={logout}
+                  onClick={logoutHandler}
                   className="hidden sm:flex items-center gap-2 px-4 py-2 bg-surface dark:bg-dark-surface rounded-full hover:bg-surface-secondary dark:hover:bg-dark-surface-secondary transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
@@ -121,7 +135,7 @@ export function Navbar() {
               )}
               {isAuthenticated && (
                 <button
-                  onClick={logout}
+                  onClick={logoutHandler}
                   className="w-full px-4 py-2 bg-surface dark:bg-dark-surface rounded-full font-semibold text-left"
                 >
                   Logout
