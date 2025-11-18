@@ -5,13 +5,33 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, ShoppingCart } from 'lucide-react';
 import { useCart } from '@/context/cart-context';
 import Link from 'next/link';
+import { addToCart, removeFromCart, removeItemFromCart } from '@/api/api';
+import { CartItem } from '@/types';
 
 export function MobileCartDrawer() {
   const { items, removeItem, updateQuantity, subtotal, clearCart } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const deliveryFee = items.length > 0 ? 2 : 0;
   const total = subtotal + deliveryFee;
+  let userId: string | null;
+  if (typeof window !== "undefined") {
+    userId = localStorage.getItem('userId')
+  }
 
+  const removeOneItemFromCart = async (item: CartItem) => {
+    await removeFromCart({ userId, itemId: item._id })
+    updateQuantity(item._id, item.quantity - 1)
+  }
+
+  const addOneItemToCart = async (item: CartItem) => {
+    await addToCart({ userId, itemId: item._id })
+    updateQuantity(item._id, item.quantity + 1)
+  }
+
+  const removeEntireItemFromCart = async (item: CartItem) => {
+    await removeItemFromCart({ userId, itemId: item._id })
+    removeItem(item._id)
+  }
   return (
     <>
       {/* Floating Cart Button - Mobile Only */}
@@ -70,7 +90,7 @@ export function MobileCartDrawer() {
                   <AnimatePresence>
                     {items.map((item) => (
                       <motion.div
-                        key={item.id}
+                        key={item._id}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
@@ -93,14 +113,14 @@ export function MobileCartDrawer() {
                           </p>
                           <div className="flex gap-2 mt-2">
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              onClick={() => removeOneItemFromCart(item)}
                               className="px-2 py-1 text-xs bg-primary/20 text-primary rounded"
                             >
                               -
                             </button>
                             <span className="px-2 py-1 text-xs">{item.quantity}</span>
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              onClick={() => addOneItemToCart(item)}
                               className="px-2 py-1 text-xs bg-primary/20 text-primary rounded"
                             >
                               +
@@ -108,7 +128,7 @@ export function MobileCartDrawer() {
                           </div>
                         </div>
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeEntireItemFromCart(item)}
                           className="text-error hover:bg-error/10 p-2 rounded transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />

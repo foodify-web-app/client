@@ -5,6 +5,7 @@ import { CartItem } from '@/types';
 
 interface CartContextType {
   items: CartItem[];
+  loadCartItem: (items: CartItem[]) => void;
   addItem: (item: CartItem) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -19,12 +20,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
+  const loadCartItem = useCallback((items: CartItem[]) => {
+
+    items.map((item, key) => {
+      if(item._id == null) return;
+      setItems(prev => {
+        const existing = prev.find(i => i._id === item._id);
+        if (existing) {
+          return prev.map(i =>
+            i._id === item._id ? { ...i, quantity: i.quantity + item.quantity } : i
+          );
+        }
+        return [...prev, item];
+      });
+    })
+
+  }, []);
+
   const addItem = useCallback((item: CartItem) => {
     setItems(prev => {
-      const existing = prev.find(i => i.id === item.id);
+      const existing = prev.find(i => i._id === item._id);
       if (existing) {
         return prev.map(i =>
-          i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
+          i._id === item._id ? { ...i, quantity: i.quantity + item.quantity } : i
         );
       }
       return [...prev, item];
@@ -32,7 +50,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const removeItem = useCallback((id: string) => {
-    setItems(prev => prev.filter(item => item.id !== id));
+    setItems(prev => prev.filter(item => item._id !== id));
   }, []);
 
   const updateQuantity = useCallback((id: string, quantity: number) => {
@@ -41,7 +59,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setItems(prev =>
-      prev.map(item => (item.id === id ? { ...item, quantity } : item))
+      prev.map(item => (item._id === id ? { ...item, quantity } : item))
     );
   }, [removeItem]);
 
@@ -50,7 +68,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, subtotal }}>
+    <CartContext.Provider value={{ items, loadCartItem, addItem, removeItem, updateQuantity, clearCart, subtotal }}>
       {children}
     </CartContext.Provider>
   );

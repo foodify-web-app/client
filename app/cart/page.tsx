@@ -6,12 +6,30 @@ import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useCart } from '@/context/cart-context';
 import { useRouter } from 'next/navigation';
+import { addToCart, removeFromCart, removeItemFromCart } from '@/api/api';
+import { CartItem } from '@/types';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, clearCart, subtotal } = useCart();
   const router = useRouter();
   const deliveryFee = items.length > 0 ? 2 : 0;
   const total = subtotal + deliveryFee;
+  const userId = localStorage.getItem('userId')
+
+  const removeOneItemFromCart = async (item: CartItem) => {
+    await removeFromCart({ userId, itemId: item._id })
+    updateQuantity(item._id, item.quantity - 1)
+  }
+
+  const addOneItemToCart = async (item: CartItem) => {
+    await addToCart({ userId, itemId: item._id })
+    updateQuantity(item._id, item.quantity + 1)
+  }
+
+  const removeEntireItemFromCart = async (item: CartItem) => {
+    await removeItemFromCart({ userId, itemId: item._id })
+    removeItem(item._id)
+  }
 
   if (items.length === 0) {
     return (
@@ -63,7 +81,7 @@ export default function CartPage() {
           <div className="lg:col-span-2 space-y-4">
             {items.map((item, index) => (
               <motion.div
-                key={item.id}
+                key={item._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
@@ -85,7 +103,7 @@ export default function CartPage() {
 
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      onClick={() => removeOneItemFromCart(item)}
                       className="p-2 hover:bg-surface dark:hover:bg-dark-surface rounded-lg transition-colors"
                     >
                       <Minus className="w-5 h-5" />
@@ -94,7 +112,7 @@ export default function CartPage() {
                       {item.quantity}
                     </span>
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      onClick={() => addOneItemToCart(item)}
                       className="p-2 hover:bg-surface dark:hover:bg-dark-surface rounded-lg transition-colors"
                     >
                       <Plus className="w-5 h-5" />
@@ -107,7 +125,7 @@ export default function CartPage() {
                     ₹{(item.price * item.quantity).toFixed(2)}
                   </p>
                   <button
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => removeEntireItemFromCart(item)}
                     className="text-error hover:bg-error/10 p-2 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-5 h-5" />

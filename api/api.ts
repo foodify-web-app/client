@@ -1,8 +1,7 @@
 import axios from "axios";
-import { UUID } from "crypto";
 
 const api = axios.create({
-  baseURL: "http://localhost:80",
+    baseURL: "http://10.10.40.12:80",
 });
 
 // Request Interceptor
@@ -21,10 +20,10 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.status === 401) {
+        if (error.response?.status === 400) {
             try {
                 const { data } = await api.post(
-                    `http://localhost:80/auth/refresh-token`,
+                    `http://10.10.40.12:80/auth/refresh-token`,
                     {},
                     { headers: { token: originalRequest.headers.token } },
                 );
@@ -42,10 +41,18 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
-
-
-export const loginUser = (data : {}) => api.post("/auth/login", data)
-export const logoutUser = () => api.post("/auth/logout")
+let userId: string | null;
+if (typeof window !== "undefined") {
+    userId = localStorage.getItem('userId');
+}
+export const loginUser = (body: {}) => api.post("/auth/login", body);
+export const logoutUser = () => api.post("/auth/logout");
+export const getDishes = () => api.get('/dishes/all');
+export const addToCart = (body: {}) => api.post('/cart/add', body);
+export const removeFromCart = (body: {}) => api.post('/cart/remove', body);
+export const removeItemFromCart = (body: {}) => api.post('/cart/remove/item', body);
+export const getUserCartItems = () => api.get(`/cart/items/userid/${userId}`)
+export const registerUser = (body: {}) => api.post('/users/register', body);
 // export const getUsers = () => api.get("/users");
 // export const addUser = (data) => api.post("/users", data);
 // export const deleteUser = (id: UUID) => api.delete(`/users/${id}`);

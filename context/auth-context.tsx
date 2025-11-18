@@ -13,7 +13,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserRes | null>(null);
-
+  // const getLocalData = () => {
+  //   const token: string | null = localStorage.getItem('token');
+  //   const userId: string | null = localStorage.getItem('userId');
+  //   return { token, userId };
+  // }
+  let token;
+  let userId;
+  if (typeof window !== "undefined") {
+    token = localStorage.getItem('token');
+    userId = localStorage.getItem('userId');
+  }
   const login = (userData: UserRes) => {
     setUser(userData);
     localStorage.setItem('token', userData.token);
@@ -32,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, signup }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: token != null && userId != null, login, logout, signup }}>
       {children}
     </AuthContext.Provider>
   );

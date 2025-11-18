@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ShoppingCart, Menu, X, User, LogOut } from 'lucide-react';
 import { useCart } from '@/context/cart-context';
@@ -8,13 +8,13 @@ import { useAuth } from '@/context/auth-context';
 import { motion } from 'framer-motion';
 import { MobileCartDrawer } from './mobile-cart-drawer';
 import ThemeToggle from './ThemeToggle';
-import { logoutUser } from '@/api/api';
+import { getUserCartItems, logoutUser } from '@/api/api';
 import { useToast } from '@/components/ui/toaster';
 
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { items } = useCart();
+  const { items, loadCartItem } = useCart();
   const { isAuthenticated, logout } = useAuth();
   const { toast } = useToast();
   const cartCount = items.length;
@@ -28,6 +28,22 @@ export function Navbar() {
     logout();
     toast({ message: 'Logout Successful', type: 'success' })
   }
+  let token: string | null;
+  let userId: string | null;
+  if (typeof window !== "undefined") {
+    token = localStorage.getItem('token');
+    userId = localStorage.getItem('userId');
+  }
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      const res = await getUserCartItems();
+      const data = res.data.data;
+      loadCartItem(data);
+    }
+    if (token != null && userId != null) {
+      fetchCartItems();
+    }
+  }, [])
 
   return (
     <>
