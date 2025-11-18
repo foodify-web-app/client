@@ -23,7 +23,7 @@ export interface MenuItem {
 }
 
 export interface CartItem {
-  id: string;
+  _id: string;
   name: string;
   price: number;
   quantity: number;
@@ -44,6 +44,15 @@ export interface UserRes {
   userId: string, 
   success: string, 
   role: string 
+}
+export interface DishRes { 
+  _id: string, 
+  name: string, 
+  description: string, 
+  price: number,
+  image: string,
+  category: string,
+  rating : string
 }
 
 export interface Address {

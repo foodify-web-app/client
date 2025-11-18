@@ -1,11 +1,10 @@
 // 'use client';
 
-import type { Metadata } from 'next';
 import './globals.css';
 import { Poppins } from 'next/font/google';
 import { Navbar } from '@/components/navbar';
 import { Toaster } from '@/components/ui/toaster';
-import { CartProvider } from '@/context/cart-context';
+import { CartProvider, useCart } from '@/context/cart-context';
 import { AuthProvider } from '@/context/auth-context';
 import { WishlistProvider } from '@/context/wishlist-context';
 import { Providers } from './providers';
@@ -20,6 +19,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={poppins.className}>
@@ -27,11 +27,11 @@ export default function RootLayout({
           <CartProvider>
             <WishlistProvider>
               <Providers>
-              <Navbar />
-              <main className="dark:bg-black min-h-screen">
-                {children}
-              </main>
-              <Toaster />
+                <Navbar />
+                <main className="dark:bg-black min-h-screen">
+                  {children}
+                </main>
+                <Toaster />
               </Providers>
             </WishlistProvider>
           </CartProvider>
@@ -42,5 +42,5 @@ export default function RootLayout({
 }
 
 export const metadata = {
-      generator: 'v0.app'
-    };
+  generator: 'v0.app'
+};

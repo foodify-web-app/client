@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, Apple, Loader } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Apple, Loader, CloudCog } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/components/ui/toaster';
@@ -27,15 +27,23 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    // setTimeout(() => {
     const res = await loginUser({ email, password });
-    console.log(res.data);
 
     login(res.data);
+    const role = res.data.role;
     toast({ message: `Login successful!`, type: 'success' });
-    router.push('/');
+    if (res.data.role == 'customer') {
+      router.push('/');
+    }
+    if (res.data.role == 'restaurant') {
+      router.push('/admin/restaurant');
+    }
+    if (res.data.role == 'admin') {
+      router.push('/admin/super');
+    }
+    // router.push('/');
+
     setIsLoading(false);
-    // }, 1000);
   };
 
   return (

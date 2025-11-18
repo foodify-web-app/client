@@ -2,19 +2,20 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, Lock, Eye, EyeOff, Loader } from 'lucide-react';
+import { User, Mail, Phone, Lock, Eye, EyeOff, Loader, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/components/ui/toaster';
 import { useRouter } from 'next/navigation';
-
+import { registerUser } from '@/api/api';
 export default function SignupPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
+    role: 'customer',
     password: '',
-    confirmPassword: '',
+    confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,14 +23,14 @@ export default function SignupPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email || !formData.phone || !formData.password) {
       toast({ message: 'Please fill all fields', type: 'error' });
       return;
@@ -39,20 +40,24 @@ export default function SignupPage() {
       toast({ message: 'Passwords do not match', type: 'error' });
       return;
     }
+    const { confirmPassword, ...safeData } = formData;
 
     setIsLoading(true);
-    setTimeout(() => {
-      signup({
-        id: '1',
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        addresses: [],
-      });
+    const res = await registerUser(safeData)
+    // setTimeout(() => {
+    // signup({
+    //   id: '1',
+    //   name: formData.name,
+    //   email: formData.email,
+    //   phone: formData.phone,
+    //   addresses: [],
+    // });
+    if (res.data.success) {
       toast({ message: 'Account created successfully!', type: 'success' });
-      router.push('/');
-      setIsLoading(false);
-    }, 1000);
+    }
+    router.push('/');
+    setIsLoading(false);
+    // }, 1000);
   };
 
   return (
@@ -123,9 +128,30 @@ export default function SignupPage() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="12345 67890"
                   className="flex-1 bg-transparent outline-none text-foreground dark:text-dark-foreground placeholder-foreground-secondary"
                 />
+              </div>
+            </div>
+
+            {/* role */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground dark:text-dark-foreground mb-2">
+                Role
+              </label>
+              <div className="flex items-center gap-3 bg-surface dark:bg-dark-surface border border-border dark:border-white/10 rounded-xl px-4 py-3">
+                <UserCheck className="w-5 h-5 text-foreground-secondary" />
+
+                <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className="flex-1 bg-transparent outline-none text-foreground dark:text-dark-foreground placeholder-foreground-secondary"
+                >
+                  <option value="customer" selected>Customer</option>
+                  <option value="restaurant">Restaurant Owner</option>
+                </select>
+
               </div>
             </div>
 
