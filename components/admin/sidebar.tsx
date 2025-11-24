@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, UtensilsCrossed, ShoppingCart, Settings, Users, TrendingUp, FileText, Bell, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useRestaurant } from '@/context/restaurant-context';
+import { useAuth } from '@/context/auth-context';
 
 interface SidebarProps {
   open: boolean;
@@ -14,16 +16,22 @@ interface SidebarProps {
 
 export function Sidebar({ open, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const isRestaurantAdmin = pathname.includes('/admin/restaurant');
   const isSuperAdmin = pathname.includes('/admin/super');
+  const { restaurantStatus } = useRestaurant();
+  const { logout } = useAuth();
+
+  const isApproved = restaurantStatus === 'approved';
+  const isRestaurantRoute = isRestaurantAdmin && !isSuperAdmin;
 
   const restaurantMenuItems = [
-    { label: 'Dashboard', icon: LayoutDashboard, href: '/admin/restaurant' },
-    { label: 'Menu Management', icon: UtensilsCrossed, href: '/admin/restaurant/menu' },
-    { label: 'Orders', icon: ShoppingCart, href: '/admin/restaurant/orders' },
-    { label: 'Analytics', icon: TrendingUp, href: '/admin/restaurant/analytics' },
-    { label: 'Profile', icon: Settings, href: '/admin/restaurant/profile' },
-    { label: 'Notifications', icon: Bell, href: '/admin/restaurant/notifications' },
+    { label: 'Dashboard', icon: LayoutDashboard, href: '/admin/restaurant', key: 'dashboard' },
+    { label: 'Dishes', icon: UtensilsCrossed, href: '/admin/restaurant/menu', key: 'dishes' },
+    { label: 'Orders', icon: ShoppingCart, href: '/admin/restaurant/orders', key: 'orders' },
+    { label: 'Analytics', icon: TrendingUp, href: '/admin/restaurant/analytics', key: 'analytics' },
+    { label: 'Settings', icon: Settings, href: '/admin/restaurant/profile', key: 'settings' },
+    { label: 'Notifications', icon: Bell, href: '/admin/restaurant/notifications', key: 'notifications' },
   ];
 
   const superAdminMenuItems = [
@@ -78,28 +86,60 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
+          
+          // For restaurant admin, check if item should be disabled
+          const isDisabled = isRestaurantRoute && !isApproved && item.key !== 'settings';
+          const isSettings = item.key === 'settings';
+
+          const handleClick = (e: React.MouseEvent) => {
+            if (isDisabled) {
+              e.preventDefault();
+              return;
+            }
+          };
 
           return (
-            <Link key={item.href} href={item.href}>
-              <motion.div
-                className={cn(
-                  'flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer',
-                  isActive
-                    ? 'bg-primary text-white'
-                    : 'text-foreground-secondary dark:text-dark-foreground-secondary hover:bg-surface-secondary dark:hover:bg-dark-surface-secondary'
-                )}
-                whileHover={{ x: 4 }}
-              >
-                <Icon size={20} />
-                <motion.span
-                  animate={{ opacity: open ? 1 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className={cn('text-sm font-medium', !open && 'hidden')}
+            <div key={item.href}>
+              {isDisabled ? (
+                <motion.div
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 cursor-not-allowed opacity-50',
+                    'text-foreground-secondary dark:text-dark-foreground-secondary'
+                  )}
+                  title="Restaurant not approved. Only Settings available."
                 >
-                  {item.label}
-                </motion.span>
-              </motion.div>
-            </Link>
+                  <Icon size={20} />
+                  <motion.span
+                    animate={{ opacity: open ? 1 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={cn('text-sm font-medium', !open && 'hidden')}
+                  >
+                    {item.label}
+                  </motion.span>
+                </motion.div>
+              ) : (
+                <Link href={item.href} onClick={handleClick}>
+                  <motion.div
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 cursor-pointer',
+                      isActive
+                        ? 'bg-primary text-white'
+                        : 'text-foreground-secondary dark:text-dark-foreground-secondary hover:bg-surface-secondary dark:hover:bg-dark-surface-secondary'
+                    )}
+                    whileHover={{ x: 4 }}
+                  >
+                    <Icon size={20} />
+                    <motion.span
+                      animate={{ opacity: open ? 1 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      className={cn('text-sm font-medium', !open && 'hidden')}
+                    >
+                      {item.label}
+                    </motion.span>
+                  </motion.div>
+                </Link>
+              )}
+            </div>
           );
         })}
       </nav>
@@ -108,6 +148,10 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
       <div className="p-4 border-t border-border dark:border-white/10">
         <motion.button
           whileHover={{ x: 4 }}
+          onClick={() => {
+            logout();
+            router.push('/login');
+          }}
           className="flex items-center gap-3 px-3 py-3 w-full rounded-lg text-foreground-secondary dark:text-dark-foreground-secondary hover:bg-surface-secondary dark:hover:bg-dark-surface-secondary transition-all duration-200"
         >
           <LogOut size={20} />

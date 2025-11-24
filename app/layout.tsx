@@ -19,7 +19,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={poppins.className}>
@@ -27,6 +27,7 @@ export default function RootLayout({
           <CartProvider>
             <WishlistProvider>
               <Providers>
+                <Navbar />
                 <main className="dark:bg-black min-h-screen">
                   {children}
                 </main>
