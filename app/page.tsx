@@ -8,6 +8,7 @@ import { Testimonials } from '@/components/home/testimonials';
 import { Footer } from '@/components/footer';
 import { useAuth } from '@/context/auth-context';
 import { useEffect } from 'react';
+import { Navbar } from '@/components/navbar';
 export default function Home() {
   const { isAuthenticated } = useAuth();
   useEffect(() => {
@@ -18,6 +19,7 @@ export default function Home() {
   })
   return (
     <div className=" w-full">
+      <Navbar />
       <HeroSection />
       <CategoriesCarousel />
       <FeaturedRestaurants />

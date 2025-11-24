@@ -2,14 +2,34 @@
 
 import { Menu, Search, Bell, Settings, User } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
+import { logoutUser } from '@/api/api';
+import { useToast } from '@/components/ui/toaster';
 
 interface AdminNavbarProps {
   onMenuClick: () => void;
 }
 
 export function AdminNavbar({ onMenuClick }: AdminNavbarProps) {
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+
+
+  const logoutHandler = async () => {
+    const res = await logoutUser();
+
+    if (!res.data.success) {
+      toast({ message: 'Error while logout', type: 'error' })
+    }
+    logout();
+    router.push('/');
+    toast({ message: 'Logout Successful', type: 'success' })
+  }
 
   return (
     <nav className="ml-14 h-16 bg-surface dark:bg-dark-surface border-b border-border dark:border-white/10 flex items-center justify-between px-6 lg:px-8">
@@ -69,13 +89,13 @@ export function AdminNavbar({ onMenuClick }: AdminNavbarProps) {
               className="absolute right-0 mt-2 w-48 bg-surface dark:bg-dark-surface rounded-lg shadow-lg border border-border dark:border-white/10 z-50 dark:text-white"
             >
               <div className="p-4 border-b border-border dark:border-white/10">
-                <p className="text-sm font-semibold">Admin User</p>
-                <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">admin@foodhub.com</p>
+                <p className="text-sm font-semibold">{user?.name}</p>
+                <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">{user?.email}</p>
               </div>
               <button className="w-full px-4 py-2 text-left text-sm hover:bg-surface-secondary dark:hover:bg-dark-surface-secondary transition-colors">
                 Profile
               </button>
-              <button className="w-full px-4 py-2 text-left text-sm hover:bg-surface-secondary dark:hover:bg-dark-surface-secondary transition-colors border-t border-border dark:border-white/10">
+              <button onClick={logoutHandler} className="w-full px-4 py-2 text-left text-sm hover:bg-surface-secondary dark:hover:bg-dark-surface-secondary transition-colors border-t border-border dark:border-white/10">
                 Logout
               </button>
             </motion.div>

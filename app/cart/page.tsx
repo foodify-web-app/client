@@ -1,34 +1,93 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useCart } from '@/context/cart-context';
 import { useRouter } from 'next/navigation';
-import { addToCart, removeFromCart, removeItemFromCart } from '@/api/api';
+import { addToCart, removeFromCart, removeItemFromCart, getUserCartItems } from '@/api/api';
 import { CartItem } from '@/types';
+import { useAuth } from '@/context/auth-context';
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, clearCart, subtotal } = useCart();
+  const { items, removeItem, updateQuantity, clearCart, subtotal, loadCartItem } = useCart();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
   const deliveryFee = items.length > 0 ? 2 : 0;
   const total = subtotal + deliveryFee;
-  const userId = localStorage.getItem('userId')
+  const userId = localStorage.getItem('userId');
+
+  useEffect(() => {
+    const loadCart = async () => {
+      if (isAuthenticated && userId) {
+        try {
+          setIsLoading(true);
+          const res = await getUserCartItems(userId);
+          if (res.data.success && res.data.data) {
+            // Filter out empty objects and map to CartItem format
+            const cartItems = res.data.data
+              .filter((item: any) => item && item._id)
+              .map((item: any) => ({
+                _id: item._id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity || 1,
+                image: item.image,
+              }));
+            loadCartItem(cartItems);
+          }
+        } catch (error) {
+          console.error('Error loading cart:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
+    };
+    loadCart();
+  }, [isAuthenticated, userId, loadCartItem]);
 
   const removeOneItemFromCart = async (item: CartItem) => {
-    await removeFromCart({ userId, itemId: item._id })
-    updateQuantity(item._id, item.quantity - 1)
-  }
+    if (!userId || !item._id) return;
+    try {
+      await removeFromCart({ userId, itemId: item._id });
+      updateQuantity(item._id, item.quantity - 1);
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+    }
+  };
 
   const addOneItemToCart = async (item: CartItem) => {
-    await addToCart({ userId, itemId: item._id })
-    updateQuantity(item._id, item.quantity + 1)
-  }
+    if (!userId || !item._id) return;
+    try {
+      await addToCart({ userId, itemId: item._id });
+      updateQuantity(item._id, item.quantity + 1);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
+  };
 
   const removeEntireItemFromCart = async (item: CartItem) => {
-    await removeItemFromCart({ userId, itemId: item._id })
-    removeItem(item._id)
+    if (!userId || !item._id) return;
+    try {
+      await removeItemFromCart({ userId, itemId: item._id });
+      removeItem(item._id);
+    } catch (error) {
+      console.error('Error removing item from cart:', error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[calc(100vh-64px)] bg-background dark:bg-dark-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-foreground-secondary dark:text-dark-foreground-secondary">Loading cart...</p>
+        </div>
+      </div>
+    );
   }
 
   if (items.length === 0) {

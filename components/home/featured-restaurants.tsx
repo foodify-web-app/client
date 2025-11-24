@@ -1,57 +1,42 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Clock, Leaf } from 'lucide-react';
 import Link from 'next/link';
 import { Restaurant } from '@/types';
-
-const mockRestaurants: Restaurant[] = [
-  {
-    id: '1',
-    name: 'Urban Bites',
-    image: '/restaurant-urban-bites.jpg',
-    rating: 4.8,
-    deliveryTime: '20-30 min',
-    deliveryFee: 2,
-    cuisineTypes: ['Italian', 'Asian'],
-    isOpen: true,
-    offers: '20% OFF',
-  },
-  {
-    id: '2',
-    name: 'Spice Garden',
-    image: '/restaurant-spice-garden.jpg',
-    rating: 4.6,
-    deliveryTime: '25-35 min',
-    deliveryFee: 2.5,
-    cuisineTypes: ['Indian', 'North Indian'],
-    isOpen: true,
-  },
-  {
-    id: '3',
-    name: 'Burger Paradise',
-    image: '/restaurant-burger-paradise.jpg',
-    rating: 4.7,
-    deliveryTime: '15-25 min',
-    deliveryFee: 1.5,
-    cuisineTypes: ['Burgers', 'American'],
-    isOpen: true,
-    offers: '₹100 OFF',
-  },
-  {
-    id: '4',
-    name: 'Sweet Dreams',
-    image: '/restaurant-sweet-dreams.jpg',
-    rating: 4.9,
-    deliveryTime: '10-20 min',
-    deliveryFee: 1,
-    cuisineTypes: ['Desserts', 'Bakery'],
-    isOpen: true,
-  },
-];
+import { getAllRestaurants } from '@/api/api';
 
 export function FeaturedRestaurants() {
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+
+  useEffect(() => {
+    loadRestaurants();
+  }, []);
+
+  const loadRestaurants = async () => {
+    try {
+      const res = await getAllRestaurants();
+      if (res.data.success && res.data.data) {
+        // Map backend data to frontend format and take first 4
+        const mappedRestaurants = res.data.data.slice(0, 4).map((r: any) => ({
+          id: r._id,
+          name: r.name,
+          image: r.image || '/restaurant-urban-bites.jpg',
+          rating: r.rating || 4.5,
+          deliveryTime: r.deliveryTime || '20-30 min',
+          deliveryFee: r.deliveryFee || 2,
+          cuisineTypes: r.cuisineTypes || [],
+          isOpen: r.isOpen !== false,
+          offers: r.offers,
+        }));
+        setRestaurants(mappedRestaurants);
+      }
+    } catch (error) {
+      console.error('Error loading restaurants:', error);
+      // Fallback to empty array if API fails
+    }
+  };
   return (
     <div className="py-16 bg-surface dark:bg-dark-surface">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -60,7 +45,14 @@ export function FeaturedRestaurants() {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {mockRestaurants.map((restaurant, index) => (
+          {restaurants.length === 0 ? (
+            <div className="col-span-4 text-center py-8">
+              <p className="text-foreground-secondary dark:text-dark-foreground-secondary">
+                No restaurants available
+              </p>
+            </div>
+          ) : (
+            restaurants.map((restaurant, index) => (
             <motion.div
               key={restaurant.id}
               initial={{ opacity: 0, y: 20 }}
@@ -116,7 +108,8 @@ export function FeaturedRestaurants() {
                 </div>
               </Link>
             </motion.div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>

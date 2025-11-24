@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/toaster';
 import { useRouter } from 'next/navigation';
 
 import { loginUser } from '@/api/api';
+import { AxiosError } from 'axios';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -27,9 +28,17 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    const res = await loginUser({ email, password });
+    let res: any = null;
+    try {
+      res = await loginUser({ email, password });
+    } catch (err: any) {
+      toast({ message: `${err.response.data.message}`, type: 'error' });
+      setIsLoading(false);
+      return;
+    }
 
-    login(res.data);
+
+    await login(res.data);
     const role = res.data.role;
     toast({ message: `Login successful!`, type: 'success' });
     if (res.data.role == 'customer') {
@@ -41,7 +50,6 @@ export default function LoginPage() {
     if (res.data.role == 'admin') {
       router.push('/admin/super');
     }
-    // router.push('/');
 
     setIsLoading(false);
   };

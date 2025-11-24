@@ -7,15 +7,18 @@ import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/components/ui/toaster';
 import { useRouter } from 'next/navigation';
+import { placeOrder } from '@/api/api';
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [postalCode, setPostalCode] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
 
   const deliveryFee = items.length > 0 ? 2 : 0;
@@ -25,19 +28,79 @@ export default function CheckoutPage() {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!deliveryAddress) {
-      toast({ message: 'Please enter delivery address', type: 'error' });
+    if (!isAuthenticated) {
+      toast({ message: 'Please login to place an order', type: 'error' });
+      router.push('/login');
+      return;
+    }
+
+    if (!deliveryAddress || !city || !postalCode) {
+      toast({ message: 'Please fill all address fields', type: 'error' });
+      return;
+    }
+
+    if (items.length === 0) {
+      toast({ message: 'Cart is empty', type: 'error' });
       return;
     }
 
     setIsProcessing(true);
 
-    setTimeout(() => {
-      clearCart();
-      toast({ message: 'Order placed successfully!', type: 'success' });
-      router.push('/orders');
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        toast({ message: 'User not found. Please login again', type: 'error' });
+        router.push('/login');
+        return;
+      }
+
+      // Prepare order items
+      const orderItems = items.map(item => ({
+        _id: item._id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      }));
+
+      // Prepare address object
+      const address = {
+        line1: deliveryAddress,
+        city: city,
+        postal_code: postalCode,
+        state: '', // Add if needed
+        country: 'India', // Default
+        instructions: deliveryInstructions,
+      };
+
+      const orderData = {
+        userId: userId,
+        items: orderItems,
+        amount: total,
+        address: address,
+        customerName: user?.role || 'Customer',
+      };
+
+      const res = await placeOrder(orderData);
+
+      if (res.data.success) {
+        if (paymentMethod === 'card' && res.data.session_url) {
+          // Redirect to Stripe checkout
+          window.location.href = res.data.session_url;
+        } else {
+          // For COD or other methods, clear cart and redirect
+          clearCart();
+          toast({ message: 'Order placed successfully!', type: 'success' });
+          router.push('/orders');
+        }
+      } else {
+        toast({ message: res.data.message || 'Failed to place order', type: 'error' });
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast({ message: error.response?.data?.message || 'Error placing order', type: 'error' });
+    } finally {
       setIsProcessing(false);
-    }, 2000);
+    }
   };
 
   if (items.length === 0) {
@@ -96,18 +159,32 @@ export default function CheckoutPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-foreground dark:text-dark-foreground mb-2">
                         City
                       </label>
-                      <input type="text" placeholder="City" className="input-base" />
+                      <input 
+                        type="text" 
+                        placeholder="City" 
+                        className="input-base"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        required
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-foreground dark:text-dark-foreground mb-2">
                         Postal Code
                       </label>
-                      <input type="text" placeholder="12345" className="input-base" />
+                      <input 
+                        type="text" 
+                        placeholder="12345" 
+                        className="input-base"
+                        value={postalCode}
+                        onChange={(e) => setPostalCode(e.target.value)}
+                        required
+                      />
                     </div>
                   </div>
 
@@ -233,7 +310,7 @@ export default function CheckoutPage() {
 
             <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
               {items.map(item => (
-                <div key={item.id} className="flex justify-between text-sm">
+                <div key={item._id} className="flex justify-between text-sm">
                   <span className="text-foreground-secondary dark:text-dark-foreground-secondary">
                     {item.name} x {item.quantity}
                   </span>

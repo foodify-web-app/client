@@ -1,107 +1,56 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, Star, Clock, Leaf } from 'lucide-react';
 import Link from 'next/link';
 import { Restaurant } from '@/types';
-
-const mockRestaurants: Restaurant[] = [
-  {
-    id: '1',
-    name: 'Urban Bites',
-    image: '/restaurant-urban-bites.jpg',
-    rating: 4.8,
-    deliveryTime: '20-30 min',
-    deliveryFee: 2,
-    cuisineTypes: ['Italian', 'Asian'],
-    isOpen: true,
-    offers: '20% OFF',
-  },
-  {
-    id: '2',
-    name: 'Spice Garden',
-    image: '/restaurant-spice-garden.jpg',
-    rating: 4.6,
-    deliveryTime: '25-35 min',
-    deliveryFee: 2.5,
-    cuisineTypes: ['Indian', 'North Indian'],
-    isOpen: true,
-  },
-  {
-    id: '3',
-    name: 'Burger Paradise',
-    image: '/restaurant-burger-paradise.jpg',
-    rating: 4.7,
-    deliveryTime: '15-25 min',
-    deliveryFee: 1.5,
-    cuisineTypes: ['Burgers', 'American'],
-    isOpen: true,
-    offers: '₹100 OFF',
-  },
-  {
-    id: '4',
-    name: 'Sweet Dreams',
-    image: '/restaurant-sweet-dreams.jpg',
-    rating: 4.9,
-    deliveryTime: '10-20 min',
-    deliveryFee: 1,
-    cuisineTypes: ['Desserts', 'Bakery'],
-    isOpen: true,
-  },
-  {
-    id: '5',
-    name: 'Sushi Supreme',
-    image: '/restaurant-sushi-supreme.jpg',
-    rating: 4.7,
-    deliveryTime: '30-40 min',
-    deliveryFee: 3,
-    cuisineTypes: ['Japanese', 'Sushi'],
-    isOpen: true,
-  },
-  {
-    id: '6',
-    name: 'Pasta House',
-    image: '/restaurant-pasta-house.jpg',
-    rating: 4.5,
-    deliveryTime: '25-35 min',
-    deliveryFee: 2,
-    cuisineTypes: ['Italian', 'Mediterranean'],
-    isOpen: true,
-  },
-  {
-    id: '7',
-    name: 'Thai Flavors',
-    image: '/restaurant-thai-flavors.jpg',
-    rating: 4.8,
-    deliveryTime: '20-30 min',
-    deliveryFee: 2,
-    cuisineTypes: ['Thai', 'Asian'],
-    isOpen: true,
-  },
-  {
-    id: '8',
-    name: 'Mexican Grill',
-    image: '/restaurant-mexican-grill.jpg',
-    rating: 4.6,
-    deliveryTime: '20-25 min',
-    deliveryFee: 1.5,
-    cuisineTypes: ['Mexican', 'Latin'],
-    isOpen: true,
-  },
-];
+import { getAllRestaurants } from '@/api/api';
 
 export default function RestaurantsPage() {
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCuisine, setSelectedCuisine] = useState<string>('');
   const [sortBy, setSortBy] = useState('rating');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadRestaurants();
+  }, []);
+
+  const loadRestaurants = async () => {
+    try {
+      setIsLoading(true);
+      const res = await getAllRestaurants();
+      if (res.data.success && res.data.data) {
+        // Map backend data to frontend format
+        const mappedRestaurants = res.data.data.map((r: any) => ({
+          id: r._id,
+          name: r.name,
+          image: r.image || '/placeholder.svg',
+          rating: r.rating || 4.5,
+          deliveryTime: r.deliveryTime || '20-30 min',
+          deliveryFee: r.deliveryFee || 2,
+          cuisineTypes: r.cuisineTypes || [],
+          isOpen: r.isOpen !== false,
+          offers: r.offers,
+        }));
+        setRestaurants(mappedRestaurants);
+      }
+    } catch (error) {
+      console.error('Error loading restaurants:', error);
+      // Fallback to empty array or mock data if API fails
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const cuisines = Array.from(
-    new Set(mockRestaurants.flatMap(r => r.cuisineTypes))
+    new Set(restaurants.flatMap(r => r.cuisineTypes))
   );
 
   const filteredRestaurants = useMemo(() => {
-    let filtered = mockRestaurants.filter(r => {
+    let filtered = restaurants.filter(r => {
       const matchesSearch = r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         r.cuisineTypes.some(c => c.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesCuisine = !selectedCuisine || r.cuisineTypes.includes(selectedCuisine);
@@ -110,11 +59,15 @@ export default function RestaurantsPage() {
 
     return filtered.sort((a, b) => {
       if (sortBy === 'rating') return b.rating - a.rating;
-      if (sortBy === 'delivery-time') return parseInt(a.deliveryTime) - parseInt(b.deliveryTime);
+      if (sortBy === 'delivery-time') {
+        const aTime = parseInt(a.deliveryTime) || 30;
+        const bTime = parseInt(b.deliveryTime) || 30;
+        return aTime - bTime;
+      }
       if (sortBy === 'price') return a.deliveryFee - b.deliveryFee;
       return 0;
     });
-  }, [searchQuery, selectedCuisine, sortBy]);
+  }, [restaurants, searchQuery, selectedCuisine, sortBy]);
 
   return (
     <div className="min-h-screen bg-background dark:bg-dark-background">
@@ -199,7 +152,13 @@ export default function RestaurantsPage() {
 
           {/* Restaurants Grid */}
           <div className="md:col-span-3">
-            {filteredRestaurants.length > 0 ? (
+            {isLoading ? (
+              <div className="card-base p-12 text-center">
+                <p className="text-foreground-secondary dark:text-dark-foreground-secondary text-lg">
+                  Loading restaurants...
+                </p>
+              </div>
+            ) : filteredRestaurants.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredRestaurants.map((restaurant, index) => (
                   <motion.div

@@ -10,7 +10,7 @@ import { MobileCartDrawer } from './mobile-cart-drawer';
 import ThemeToggle from './ThemeToggle';
 import { getUserCartItems, logoutUser } from '@/api/api';
 import { useToast } from '@/components/ui/toaster';
-
+import { useRouter } from 'next/navigation';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +18,7 @@ export function Navbar() {
   const { isAuthenticated, logout } = useAuth();
   const { toast } = useToast();
   const cartCount = items.length;
+  const router = useRouter();
 
   const logoutHandler = async () => {
     const res = await logoutUser();
@@ -26,6 +27,7 @@ export function Navbar() {
       toast({ message: 'Error while logout', type: 'error' })
     }
     logout();
+    router.push('/');
     toast({ message: 'Logout Successful', type: 'success' })
   }
   let token: string | null;
@@ -36,7 +38,7 @@ export function Navbar() {
   }
   useEffect(() => {
     const fetchCartItems = async () => {
-      const res = await getUserCartItems();
+      const res = await getUserCartItems(userId as string);
       const data = res.data.data;
       loadCartItem(data);
     }
