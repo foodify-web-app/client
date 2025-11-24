@@ -20,21 +20,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const loadCartItem = useCallback((items: CartItem[]) => {
-
-    items.map((item, key) => {
-      if(item._id == null) return;
-      setItems(prev => {
-        const existing = prev.find(i => i._id === item._id);
-        if (existing) {
-          return prev.map(i =>
-            i._id === item._id ? { ...i, quantity: i.quantity + item.quantity } : i
-          );
-        }
-        return [...prev, item];
-      });
-    })
-
+  const loadCartItem = useCallback((newItems: CartItem[]) => {
+    const validItems = newItems.filter(item => item && item._id);
+    setItems(validItems);
   }, []);
 
   const addItem = useCallback((item: CartItem) => {

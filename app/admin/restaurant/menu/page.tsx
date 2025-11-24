@@ -1,56 +1,52 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { DataTable } from '@/components/admin/data-table';
 import { Dish } from '@/types/admin';
 import { motion } from 'framer-motion';
-
-const mockDishes: Dish[] = [
-  {
-    id: '1',
-    name: 'Biryani Supreme',
-    description: 'Fragrant basmati rice with tender meat',
-    category: 'Biryani',
-    price: 350,
-    image: '/flavorful-biryani.png',
-    isVeg: false,
-    isFeatured: true,
-    availability: true,
-    rating: 4.8,
-  },
-  {
-    id: '2',
-    name: 'Paneer Tikka',
-    description: 'Grilled paneer with spices',
-    category: 'Appetizers',
-    price: 280,
-    image: '/paneer.jpg',
-    isVeg: true,
-    isFeatured: true,
-    availability: true,
-    rating: 4.6,
-  },
-  {
-    id: '3',
-    name: 'Butter Chicken',
-    description: 'Creamy chicken in butter sauce',
-    category: 'Main Course',
-    price: 380,
-    image: '/butter-chicken.jpg',
-    isVeg: false,
-    isFeatured: false,
-    availability: true,
-    rating: 4.7,
-  },
-];
+import { getDishes, deleteDish } from '@/api/api';
+import { useToast } from '@/components/ui/toaster';
 
 export default function MenuManagement() {
-  const [dishes, setDishes] = useState(mockDishes);
+  const [dishes, setDishes] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showDrawer, setShowDrawer] = useState(false);
+  const { toast } = useToast();
 
-  const handleDelete = (id: string) => {
-    setDishes(dishes.filter((d) => d.id !== id));
+  useEffect(() => {
+    loadDishes();
+  }, []);
+
+  const loadDishes = async () => {
+    try {
+      setIsLoading(true);
+      const res = await getDishes();
+      if (res.data.success && res.data.data) {
+        setDishes(res.data.data);
+      }
+    } catch (error) {
+      console.error('Error loading dishes:', error);
+      toast({ message: 'Error loading dishes', type: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this dish?')) return;
+    try {
+      const res = await deleteDish(id);
+      if (res.data.success) {
+        toast({ message: 'Dish deleted successfully', type: 'success' });
+        loadDishes();
+      } else {
+        toast({ message: res.data.message || 'Error deleting dish', type: 'error' });
+      }
+    } catch (error) {
+      console.error('Error deleting dish:', error);
+      toast({ message: 'Error deleting dish', type: 'error' });
+    }
   };
 
   return (
@@ -104,56 +100,55 @@ export default function MenuManagement() {
         className="dark:bg-zinc-800 card-base p-6"
       >
         <h3 className="text-lg font-semibold text-foreground dark:text-dark-foreground mb-4">All Dishes</h3>
-        <DataTable
-          columns={[
-            {
-              key: 'name',
-              label: 'Dish Name',
-              render: (_, item: Dish) => (
-                <div className="flex items-center gap-3">
-                  <img src={item.image || "/placeholder.svg"} alt={item.name} className="w-10 h-10 rounded-lg object-cover" />
-                  <span className="font-medium">{item.name}</span>
-                </div>
-              ),
-            },
-            { key: 'category', label: 'Category' },
-            { key: 'price', label: 'Price', render: (v) => `₹${v}` },
-            {
-              key: 'isVeg',
-              label: 'Type',
-              render: (v) => (
-                <span className={`px-2 py-1 rounded text-xs font-medium ${v ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
-                  {v ? 'Veg' : 'Non-Veg'}
-                </span>
-              ),
-            },
-            {
-              key: 'availability',
-              label: 'Status',
-              render: (v) => (
-                <span className={`px-2 py-1 rounded text-xs font-medium ${v ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-                  {v ? 'Available' : 'Unavailable'}
-                </span>
-              ),
-            },
-            {
-              key: 'id',
-              label: 'Actions',
-              render: (_, item) => (
-                <div className="flex gap-2">
-                  <button className="p-1 hover:bg-surface-secondary dark:hover:bg-dark-surface-secondary rounded transition-colors">
-                    <Edit2 size={16} />
-                  </button>
-                  <button onClick={() => handleDelete(item.id)} className="p-1 hover:bg-error/10 text-error rounded transition-colors">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ),
-            },
-          ]}
-          data={dishes}
-          searchKeys={['name', 'category']}
-        />
+        {isLoading ? (
+          <div className="text-center py-8">
+            <p className="text-foreground-secondary dark:text-dark-foreground-secondary">Loading dishes...</p>
+          </div>
+        ) : (
+          <DataTable
+            columns={[
+              {
+                key: 'name',
+                label: 'Dish Name',
+                render: (_, item: any) => (
+                  <div className="flex items-center gap-3">
+                    <img src={item.image || "/placeholder.svg"} alt={item.name} className="w-10 h-10 rounded-lg object-cover" />
+                    <span className="font-medium">{item.name}</span>
+                  </div>
+                ),
+              },
+              { key: 'category', label: 'Category' },
+              { key: 'price', label: 'Price', render: (v) => `₹${v}` },
+              {
+                key: 'description',
+                label: 'Description',
+                render: (v) => <span className="text-sm text-foreground-secondary">{v?.substring(0, 50)}...</span>,
+              },
+              {
+                key: '_id',
+                label: 'Actions',
+                render: (_, item) => (
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setShowDrawer(true)}
+                      className="p-1 hover:bg-surface-secondary dark:hover:bg-dark-surface-secondary rounded transition-colors"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(item._id)} 
+                      className="p-1 hover:bg-error/10 text-error rounded transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
+            data={dishes}
+            searchKeys={['name', 'category', 'description']}
+          />
+        )}
       </motion.div>
     </div>
   );

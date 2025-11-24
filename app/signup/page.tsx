@@ -148,7 +148,7 @@ export default function SignupPage() {
                   onChange={handleChange}
                   className="flex-1 bg-transparent outline-none text-foreground dark:text-dark-foreground placeholder-foreground-secondary"
                 >
-                  <option value="customer" selected>Customer</option>
+                  <option value="customer">Customer</option>
                   <option value="restaurant">Restaurant Owner</option>
                 </select>
 
