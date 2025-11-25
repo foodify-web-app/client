@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Loader2, X } from 'lucide-react';
 import { DataTable } from '@/components/admin/data-table';
 import { motion } from 'framer-motion';
-import { getDishesByRestaurant, createDish, updateDishById, deleteDish } from '@/api/api';
+import { getDishesByRestaurant, createDish, updateDishById, deleteDish, getDishes } from '@/api/api';
 import { useToast } from '@/components/ui/toaster';
 import { useRestaurant } from '@/context/restaurant-context';
 import { useForm } from 'react-hook-form';
@@ -31,6 +31,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Label } from 'recharts';
 
 const dishSchema = z.object({
   dishName: z.string().min(2, 'Dish name must be at least 2 characters'),
@@ -262,7 +263,7 @@ export default function MenuManagement() {
   const isApproved = restaurantStatus === 'approved';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pl-16">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}

@@ -193,7 +193,7 @@ export default function RestaurantProfile() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pl-16" >
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-3xl font-bold text-foreground dark:text-dark-foreground mb-2">Restaurant Settings</h1>
         <p className="text-foreground-secondary dark:text-dark-foreground-secondary">Manage your restaurant information</p>
