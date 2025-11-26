@@ -15,7 +15,7 @@ export function RestaurantStatusBanner() {
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-warning/10 border-l-4 border-warning p-4 mb-6"
+      className="bg-warning/10 border-l-4 border-warning p-4 mb-6 pl-16"
     >
       <div className="flex items-center gap-3">
         <AlertCircle className="text-warning" size={20} />

@@ -77,9 +77,9 @@ export const deleteDish = (id: string) => api.delete(`/dishes/${id}`);
 export const updateDish = (id: string, formData: FormData) => api.put(`/dishes/update/${id}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
 });
-export const updateDishById = (id: string, formData: FormData) => api.put(`/dishes/${id}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-});
+// export const updateDishById = (id: string, formData: FormData) => api.put(`/dishes/${id}`, formData, {
+//     headers: { 'Content-Type': 'multipart/form-data' }
+// });
 
 // ============ CART APIs ============
 export const addToCart = (body: { userId: string; itemId: string }) => api.post('/cart/add', body);

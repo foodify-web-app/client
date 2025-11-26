@@ -233,7 +233,7 @@ export default function OrdersManagement() {
                       disabled={isUpdating || nextStatuses.length === 0}
                     >
                       <SelectTrigger
-                        className={`w-40 ${
+                        className={`dark:text-white w-40 ${
                           statusColors[v as keyof typeof statusColors] || statusColors.pending
                         }`}
                       >
@@ -243,7 +243,10 @@ export default function OrdersManagement() {
                           <SelectValue />
                         )}
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className='dark:bg-zinc-700 dark:text-white'>
+                        <SelectItem value="select status" disabled>
+                              Select Status
+                            </SelectItem>
                         {statusFlow
                           .filter((status) => {
                             // Show current status and next valid statuses
