@@ -44,20 +44,11 @@ export default function SignupPage() {
 
     setIsLoading(true);
     const res = await registerUser(safeData)
-    // setTimeout(() => {
-    // signup({
-    //   id: '1',
-    //   name: formData.name,
-    //   email: formData.email,
-    //   phone: formData.phone,
-    //   addresses: [],
-    // });
     if (res.data.success) {
       toast({ message: 'Account created successfully!', type: 'success' });
     }
     router.push('/');
     setIsLoading(false);
-    // }, 1000);
   };
 
   return (

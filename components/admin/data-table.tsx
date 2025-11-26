@@ -44,7 +44,7 @@ export function DataTable<T extends { id: string }>({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 dark:text-white">
       {searchable && (
         <div className="relative">
           <Search size={18} className="absolute left-3 top-3 text-foreground-secondary dark:text-dark-foreground-secondary" />

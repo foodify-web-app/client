@@ -181,7 +181,7 @@ export default function RestaurantDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pl-16">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-3xl font-bold text-foreground dark:text-dark-foreground mb-2">Dashboard</h1>

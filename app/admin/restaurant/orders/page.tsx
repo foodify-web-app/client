@@ -145,7 +145,7 @@ export default function OrdersManagement() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pl-16">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-3xl font-bold text-foreground dark:text-dark-foreground mb-2">Orders</h1>
         <p className="text-foreground-secondary dark:text-dark-foreground-secondary">
@@ -233,7 +233,7 @@ export default function OrdersManagement() {
                       disabled={isUpdating || nextStatuses.length === 0}
                     >
                       <SelectTrigger
-                        className={`w-40 ${
+                        className={`dark:text-white w-40 ${
                           statusColors[v as keyof typeof statusColors] || statusColors.pending
                         }`}
                       >
@@ -243,7 +243,10 @@ export default function OrdersManagement() {
                           <SelectValue />
                         )}
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className='dark:bg-zinc-700 dark:text-white'>
+                        <SelectItem value="select status" disabled>
+                              Select Status
+                            </SelectItem>
                         {statusFlow
                           .filter((status) => {
                             // Show current status and next valid statuses

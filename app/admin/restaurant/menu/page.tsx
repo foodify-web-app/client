@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Loader2, X } from 'lucide-react';
+import { useState, useEffect, type ChangeEvent } from 'react';
+import { Plus, Edit2, Trash2, Loader2, Camera } from 'lucide-react';
 import { DataTable } from '@/components/admin/data-table';
 import { motion } from 'framer-motion';
-import { getDishesByRestaurant, createDish, updateDishById, deleteDish } from '@/api/api';
+import { getDishesByRestaurant, createDish, updateDish, deleteDish, getDishes } from '@/api/api';
 import { useToast } from '@/components/ui/toaster';
 import { useRestaurant } from '@/context/restaurant-context';
 import { useForm } from 'react-hook-form';
@@ -31,6 +31,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 
 const dishSchema = z.object({
   dishName: z.string().min(2, 'Dish name must be at least 2 characters'),
@@ -171,7 +172,7 @@ export default function MenuManagement() {
     setImagePreview(null);
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setImageFile(file);
@@ -214,7 +215,7 @@ export default function MenuManagement() {
 
       let response;
       if (editingDish) {
-        response = await updateDishById(editingDish._id, formData);
+        response = await updateDish(editingDish._id, formData);
       } else {
         response = await createDish(formData);
       }
@@ -259,10 +260,15 @@ export default function MenuManagement() {
     }
   };
 
+  const tagPreview = (form.watch('tags') || '')
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+
   const isApproved = restaurantStatus === 'approved';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pl-16">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -288,7 +294,7 @@ export default function MenuManagement() {
       </motion.div>
 
       {/* Categories */}
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
@@ -306,7 +312,7 @@ export default function MenuManagement() {
             </motion.div>
           ))}
         </div>
-      </motion.div>
+      </motion.div> */}
 
       {/* Dishes Table */}
       <motion.div
@@ -396,8 +402,8 @@ export default function MenuManagement() {
       </motion.div>
 
       {/* Add/Edit Dish Dialog */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={showDialog} onOpenChange={setShowDialog} >
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto dark:bg-zinc-900 dark:text-white border-none">
           <DialogHeader>
             <DialogTitle>{editingDish ? 'Edit Dish' : 'Add New Dish'}</DialogTitle>
             <DialogDescription>
@@ -406,245 +412,326 @@ export default function MenuManagement() {
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {/* Image Upload */}
-              <div>
-                <Label>Dish Image</Label>
-                <div className="mt-2 flex items-center gap-4">
-                  {imagePreview && (
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-24 h-24 object-cover rounded-lg"
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 dark:text-white">
+              <div className="grid gap-6 lg:grid-cols-1">
+                <div className="space-y-4">
+                  <div className="dark:bg-zinc-800 card-base p-5 space-y-3">
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="dish-image-upload"
+                        className="text-[11px] uppercase tracking-wide text-foreground-secondary dark:text-dark-foreground-secondary"
+                      >
+                        Dish image
+                      </Label>
+                      <p className="text-sm font-semibold text-foreground dark:text-dark-foreground">
+                        Visual identity
+                      </p>
+                      <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">
+                        Square photos (800×800) look best across the app.
+                      </p>
+                    </div>
+                    <input
+                      id="dish-image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
                     />
-                  )}
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="flex-1"
-                  />
+                    <label htmlFor="dish-image-upload" className="block cursor-pointer">
+                      <div className="relative h-48 rounded-2xl border border-dashed border-foreground/15 dark:border-dark-foreground/20 overflow-hidden group">
+                        {imagePreview ? (
+                          <img src={imagePreview} alt="Dish preview" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full flex-col items-center justify-center text-center px-4 text-foreground-secondary dark:text-dark-foreground-secondary">
+                            <Camera className="mb-2 text-primary" size={24} />
+                            <p className="text-sm font-semibold text-foreground dark:text-dark-foreground">
+                              Upload a dish photo
+                            </p>
+                            <p className="text-xs">PNG or JPG, up to 5MB</p>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors">
+                          <span className="flex items-center gap-2 text-white text-sm font-semibold opacity-0 group-hover:opacity-100">
+                            <Camera size={16} />
+                            {imagePreview ? 'Change photo' : 'Add photo'}
+                          </span>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className="dark:bg-zinc-800 card-base p-5 space-y-4">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground dark:text-dark-foreground">Dish attributes</p>
+                      <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">
+                        Control dietary badges and availability.
+                      </p>
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="veg"
+                      render={({ field }) => (
+                        <FormItem className="rounded-2xl border border-foreground/10 dark:border-dark-foreground/20 p-4">
+                          <div className="flex items-center justify-between gap-6">
+                            <div>
+                              <FormLabel>Vegetarian</FormLabel>
+                              <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">
+                                Toggle if the dish is vegetarian friendly.
+                              </p>
+                            </div>
+                            <FormControl>
+                              <Switch className='bg-red-400' checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="spiceLevel"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Spice Level</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select level" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className='bg-white dark:bg-zinc-700 dark:text-white dark:border-none'>
+                                {SPICE_LEVELS.map((level) => (
+                                  <SelectItem key={level.value} value={level.value}>
+                                    {level.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="stockStatus"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Stock Status</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Availability" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent  className='bg-white dark:bg-zinc-700 dark:text-white dark:border-none'>
+                                <SelectItem value="in-stock">In Stock</SelectItem>
+                                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="dark:bg-zinc-800 card-base p-5 space-y-4">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground dark:text-dark-foreground">Basic details</p>
+                      <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">
+                        Help diners understand what makes this dish special.
+                      </p>
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="dishName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Dish Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="e.g., Butter Chicken" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={4} placeholder="Describe the flavor, texture, and serving size..." />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="dark:bg-zinc-800 card-base p-5 space-y-4">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground dark:text-dark-foreground">Categories & Pricing</p>
+                      <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">
+                        Organize dishes so customers can filter faster.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent  className='bg-white dark:bg-zinc-700 dark:text-white dark:border-none'>
+                                {CATEGORIES.map((cat) => (
+                                  <SelectItem key={cat} value={cat}>
+                                    {cat}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="subCategory"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sub Category (Optional)</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., Chef's Specials" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="price"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Price (₹)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="discountPrice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Discount Price (₹)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                {...field}
+                                value={field.value || ''}
+                                onChange={(e) =>
+                                  field.onChange(e.target.value ? parseFloat(e.target.value) : null)
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="estimatedPrepareTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estimated Prep Time (minutes)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="dark:bg-zinc-800 card-base p-5 space-y-4">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground dark:text-dark-foreground">Tags & Highlights</p>
+                      <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">
+                        Separate tags with commas to boost discoverability.
+                      </p>
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="tags"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tags</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="e.g., spicy, popular, chef's choice" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {tagPreview.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {tagPreview.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="bg-primary/10 text-primary">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <FormField
-                control={form.control}
-                name="dishName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Dish Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="e.g., Butter Chicken" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} rows={3} placeholder="Describe the dish..." />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {CATEGORIES.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="subCategory"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sub Category (Optional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="e.g., Vegetarian Biryani" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price (₹)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="discountPrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Discount Price (₹) - Optional</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...field}
-                          value={field.value || ''}
-                          onChange={(e) =>
-                            field.onChange(e.target.value ? parseFloat(e.target.value) : null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="spiceLevel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Spice Level</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {SPICE_LEVELS.map((level) => (
-                            <SelectItem key={level.value} value={level.value}>
-                              {level.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="estimatedPrepareTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estimated Prepare Time (minutes)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="veg"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                      <div className="space-y-0.5">
-                        <FormLabel>Vegetarian</FormLabel>
-                      </div>
-                      <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="stockStatus"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Stock Status</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="in-stock">In Stock</SelectItem>
-                          <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="tags"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tags (comma-separated)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="e.g., spicy, popular, recommended" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={handleCloseDialog}>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button className='dark:bg-zinc-700 dark:border-none' type="button" variant="outline" onClick={handleCloseDialog}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting} className="bg-primary text-white hover:bg-primary-dark">
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="animate-spin mr-2" size={16} />
+                      <Loader2 className="mr-2 animate-spin" size={16} />
                       Saving...
                     </>
                   ) : (
