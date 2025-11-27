@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { placeOrder } from '@/api/api';
 
 export default function CheckoutPage() {
-  const { items, subtotal, clearCart, cartRestaurantId } = useCart();
+  const { items, subtotal, clearCart } = useCart();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -53,13 +53,12 @@ export default function CheckoutPage() {
         router.push('/login');
         return;
       }
-
       // Prepare order items
       const orderItems = items.map(item => ({
-        _id: item._id,
         name: item.name,
         price: item.price,
-        quantity: item.quantity
+        quantity: item.quantity,
+        restaurantId: item.restaurantId,
       }));
 
       // Prepare address object
@@ -78,7 +77,6 @@ export default function CheckoutPage() {
         amount: total,
         address: address,
         customerName: user?.role || 'Customer',
-        // restaurnatId: cartRestaurantId
       };
 
       const res = await placeOrder(orderData);
@@ -227,8 +225,8 @@ export default function CheckoutPage() {
                     <label
                       key={method.id}
                       className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${paymentMethod === method.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border dark:border-white/10 hover:border-primary/50'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border dark:border-white/10 hover:border-primary/50'
                         }`}
                     >
                       <input
