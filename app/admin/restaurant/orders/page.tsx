@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Order } from '@/types/admin';
 import { DataTable } from '@/components/admin/data-table';
 import { motion } from 'framer-motion';
-import { getOrdersByRestaurant, updateOrderStatusById } from '@/api/api';
+import { getOrdersByRestaurant, updateOrderStatus, updateOrderStatusById } from '@/api/api';
 import { useToast } from '@/components/ui/toaster';
 import { useRestaurant } from '@/context/restaurant-context';
 import { Loader2 } from 'lucide-react';
@@ -116,7 +116,7 @@ export default function OrdersManagement() {
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
     setUpdatingStatus(orderId);
     try {
-      const res = await updateOrderStatusById(orderId, { status: newStatus });
+      const res = await updateOrderStatus({ orderId, status: newStatus });
       if (res.data.success) {
         toast({ message: 'Order status updated successfully', type: 'success' });
         loadOrders();

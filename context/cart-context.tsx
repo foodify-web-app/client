@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { CartItem } from '@/types';
+import { useToast } from '@/components/ui/toaster';
 
 interface CartContextType {
   items: CartItem[];
@@ -11,12 +12,16 @@ interface CartContextType {
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   subtotal: number;
+  cartRestaurantId: String;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { toast } = useToast();
+
   const [items, setItems] = useState<CartItem[]>([]);
+  const [cartRestaurantId, setCartRestaurantId] = useState("");
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -26,6 +31,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addItem = useCallback((item: CartItem) => {
+    if (cartRestaurantId == null) {
+      setCartRestaurantId(item.restaurantId);
+    } else {
+      toast ({message : `${item.restaurantId}`, type: "success"})
+      if (item.restaurantId != cartRestaurantId) {
+        toast({ message: 'All items in an order must be from the same restaurant ', type: 'error' });
+        return;
+      }
+    }
     setItems(prev => {
       const existing = prev.find(i => i._id === item._id);
       if (existing) {
@@ -56,7 +70,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <CartContext.Provider value={{ items, loadCartItem, addItem, removeItem, updateQuantity, clearCart, subtotal }}>
+    <CartContext.Provider value={{ items, loadCartItem, addItem, removeItem, updateQuantity, clearCart, subtotal, cartRestaurantId }}>
       {children}
     </CartContext.Provider>
   );

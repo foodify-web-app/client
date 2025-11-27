@@ -28,7 +28,9 @@ api.interceptors.response.use(
                 const { data } = await api.post(
                     `${API_BASE_URL}/auth/refresh-token`,
                     {},
-                    { headers: { token: originalRequest.headers.token } },
+                    { headers: { token: originalRequest.headers.token,
+                        "Content-Type": "application/json"
+                     } },
                 );
 
                 const newAccessToken = data.accessToken;
@@ -70,16 +72,16 @@ export const deleteUser = (id: string) => api.delete(`/users/admin/delete/${id}`
 export const getDishes = () => api.get('/dishes/all');
 export const getDishById = (id: string) => api.get(`/dishes/${id}`);
 export const getDishesByRestaurant = (restaurantId: string) => api.get(`/dishes/restaurant/${restaurantId}`);
-export const createDish = (formData: FormData) => api.post('/dishes/create', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-});
+export const createDish = (formData: FormData) => api.post('/dishes/create', formData);
 export const deleteDish = (id: string) => api.delete(`/dishes/${id}`);
-export const updateDish = (id: string, formData: FormData) => api.put(`/dishes/update/${id}`, formData, {
+export const updateDish = (id: string, formData: FormData) => api.put(`/dishes/update/dish/${id}`, formData,
+     {
+    headers: { 'Content-Type': 'application/json' }
+}
+);
+export const updateDishWithImage = (id: string, formData: FormData) => api.put(`/dishes/update/image/${id}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
 });
-// export const updateDishById = (id: string, formData: FormData) => api.put(`/dishes/${id}`, formData, {
-//     headers: { 'Content-Type': 'multipart/form-data' }
-// });
 
 // ============ CART APIs ============
 export const addToCart = (body: { userId: string; itemId: string }) => api.post('/cart/add', body);

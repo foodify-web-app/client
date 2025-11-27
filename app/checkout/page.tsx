@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { placeOrder } from '@/api/api';
 
 export default function CheckoutPage() {
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal, clearCart, cartRestaurantId } = useCart();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -59,7 +59,7 @@ export default function CheckoutPage() {
         _id: item._id,
         name: item.name,
         price: item.price,
-        quantity: item.quantity,
+        quantity: item.quantity
       }));
 
       // Prepare address object
@@ -78,6 +78,7 @@ export default function CheckoutPage() {
         amount: total,
         address: address,
         customerName: user?.role || 'Customer',
+        // restaurnatId: cartRestaurantId
       };
 
       const res = await placeOrder(orderData);
@@ -159,14 +160,14 @@ export default function CheckoutPage() {
                     />
                   </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-foreground dark:text-dark-foreground mb-2">
                         City
                       </label>
-                      <input 
-                        type="text" 
-                        placeholder="City" 
+                      <input
+                        type="text"
+                        placeholder="City"
                         className="input-base"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
@@ -177,9 +178,9 @@ export default function CheckoutPage() {
                       <label className="block text-sm font-semibold text-foreground dark:text-dark-foreground mb-2">
                         Postal Code
                       </label>
-                      <input 
-                        type="text" 
-                        placeholder="12345" 
+                      <input
+                        type="text"
+                        placeholder="12345"
                         className="input-base"
                         value={postalCode}
                         onChange={(e) => setPostalCode(e.target.value)}
@@ -225,11 +226,10 @@ export default function CheckoutPage() {
                   ].map(method => (
                     <label
                       key={method.id}
-                      className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                        paymentMethod === method.id
+                      className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${paymentMethod === method.id
                           ? 'border-primary bg-primary/5'
                           : 'border-border dark:border-white/10 hover:border-primary/50'
-                      }`}
+                        }`}
                     >
                       <input
                         type="radio"

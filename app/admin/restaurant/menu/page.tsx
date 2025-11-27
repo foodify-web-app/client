@@ -4,7 +4,7 @@ import { useState, useEffect, type ChangeEvent } from 'react';
 import { Plus, Edit2, Trash2, Loader2, Camera } from 'lucide-react';
 import { DataTable } from '@/components/admin/data-table';
 import { motion } from 'framer-motion';
-import { getDishesByRestaurant, createDish, updateDish, deleteDish, getDishes } from '@/api/api';
+import { getDishesByRestaurant, createDish, updateDish, deleteDish, getDishes, updateDishWithImage } from '@/api/api';
 import { useToast } from '@/components/ui/toaster';
 import { useRestaurant } from '@/context/restaurant-context';
 import { useForm } from 'react-hook-form';
@@ -174,6 +174,13 @@ export default function MenuManagement() {
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    if (!file) return; // <--- FIX: TS knows file is File now
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Only JPG, JPEG, PNG files are allowed!");
+      e.target.value = ""; // reset input
+      return;
+    }
     if (file) {
       setImageFile(file);
       const reader = new FileReader();
@@ -215,6 +222,9 @@ export default function MenuManagement() {
 
       let response;
       if (editingDish) {
+        if (imageFile) {
+          response = await updateDishWithImage(editingDish._id, formData);
+        }
         response = await updateDish(editingDish._id, formData);
       } else {
         response = await createDish(formData);
@@ -433,7 +443,7 @@ export default function MenuManagement() {
                     <input
                       id="dish-image-upload"
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg, image/jpg, image/png"
                       onChange={handleImageChange}
                       className="hidden"
                     />
@@ -527,7 +537,7 @@ export default function MenuManagement() {
                                   <SelectValue placeholder="Availability" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent  className='bg-white dark:bg-zinc-700 dark:text-white dark:border-none'>
+                              <SelectContent className='bg-white dark:bg-zinc-700 dark:text-white dark:border-none'>
                                 <SelectItem value="in-stock">In Stock</SelectItem>
                                 <SelectItem value="out-of-stock">Out of Stock</SelectItem>
                               </SelectContent>
@@ -599,7 +609,7 @@ export default function MenuManagement() {
                                   <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent  className='bg-white dark:bg-zinc-700 dark:text-white dark:border-none'>
+                              <SelectContent className='bg-white dark:bg-zinc-700 dark:text-white dark:border-none'>
                                 {CATEGORIES.map((cat) => (
                                   <SelectItem key={cat} value={cat}>
                                     {cat}
