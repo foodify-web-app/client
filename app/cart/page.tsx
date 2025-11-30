@@ -18,7 +18,8 @@ export default function CartPage() {
   const deliveryFee = items.length > 0 ? 2 : 0;
   const total = subtotal + deliveryFee;
   const userId = localStorage.getItem('userId');
-
+  console.log('items:', items);
+  
   useEffect(() => {
     const loadCart = async () => {
       if (isAuthenticated && userId) {
@@ -35,6 +36,7 @@ export default function CartPage() {
                 price: item.price,
                 quantity: item.quantity || 1,
                 image: item.image,
+                restaurantId: item.restaurantId,
               }));
             loadCartItem(cartItems);
           }

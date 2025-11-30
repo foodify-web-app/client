@@ -85,29 +85,29 @@ export default function OrdersManagement() {
       setIsLoading(true);
       const res = await getOrdersByRestaurant(restaurantId);
       if (res.data.success && res.data.data) {
-        setOrders(res.data.data);
-      } else {
-        // Fallback: Get all orders and filter by restaurantId from items
-        // This is a workaround if the endpoint doesn't exist
-        const allRes = await getAllOrders();
-        if (allRes.data.success && allRes.data.data) {
-          // Filter orders where items contain this restaurant's dishes
-          // This requires restaurantId in order items, which may not exist
-          // For now, show all orders (backend needs to add restaurantId to orders)
-          setOrders(allRes.data.data);
-        }
+        const data = res.data.data;
+        const grouped = Object.values(
+          data.reduce((acc: Record<string, any>, item: any) => {
+            if (!acc[item.orderId]) {
+              acc[item.orderId] = {
+                orderId: item.orderId._id,
+                items: [],
+                amount: item.orderId.amount,
+                status: item.orderId.status,
+                date: item.orderId.createdAt,
+              };
+            }
+            acc[item.orderId].items.push(item);
+            return acc;
+          }, {})
+        );
+
+        setOrders(grouped);
+        console.log('Loaded orders:', grouped);
       }
     } catch (error: any) {
       console.error('Error loading orders:', error);
-      // Fallback to get all orders
-      try {
-        const allRes = await getAllOrders();
-        if (allRes.data.success && allRes.data.data) {
-          setOrders(allRes.data.data);
-        }
-      } catch (e) {
-        toast({ message: 'Error loading orders', type: 'error' });
-      }
+      toast({ message: 'Error loading orders', type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -172,17 +172,17 @@ export default function OrdersManagement() {
           <DataTable
             columns={[
               {
-                key: '_id',
+                key: 'orderId',
                 label: 'Order ID',
                 render: (v) => <span className="font-mono text-sm">{v?.slice(-8) || 'N/A'}</span>,
               },
-              {
-                key: 'userId',
-                label: 'Customer',
-                render: (v, item) => (
-                  <span className="font-medium">{getCustomerName(item)}</span>
-                ),
-              },
+              // {
+              //   key: 'userId',
+              //   label: 'Customer',
+              //   render: (v, item) => (
+              //     <span className="font-medium">{getCustomerName(item)}</span>
+              //   ),
+              // },
               {
                 key: 'items',
                 label: 'Items',
@@ -233,9 +233,8 @@ export default function OrdersManagement() {
                       disabled={isUpdating || nextStatuses.length === 0}
                     >
                       <SelectTrigger
-                        className={`dark:text-white w-40 ${
-                          statusColors[v as keyof typeof statusColors] || statusColors.pending
-                        }`}
+                        className={`dark:text-white w-40 ${statusColors[v as keyof typeof statusColors] || statusColors.pending
+                          }`}
                       >
                         {isUpdating ? (
                           <Loader2 className="animate-spin mr-2" size={14} />
@@ -245,8 +244,8 @@ export default function OrdersManagement() {
                       </SelectTrigger>
                       <SelectContent className='dark:bg-zinc-700 dark:text-white'>
                         <SelectItem value="select status" disabled>
-                              Select Status
-                            </SelectItem>
+                          Select Status
+                        </SelectItem>
                         {statusFlow
                           .filter((status) => {
                             // Show current status and next valid statuses
@@ -284,4 +283,6 @@ export default function OrdersManagement() {
   );
 }
 
-import { getAllOrders } from '@/api/api';
+import { getAllOrders } from '@/api/api'; import { log } from 'console';
+import { date } from 'zod';
+

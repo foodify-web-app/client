@@ -1,4 +1,4 @@
-// 'use client';
+'use client';
 
 import './globals.css';
 import { Poppins } from 'next/font/google';
@@ -8,6 +8,7 @@ import { CartProvider, useCart } from '@/context/cart-context';
 import { AuthProvider } from '@/context/auth-context';
 import { WishlistProvider } from '@/context/wishlist-context';
 import { Providers } from './providers';
+import { usePathname } from 'next/navigation';
 
 const poppins = Poppins({
   weight: ['400', '500', '600', '700', '800'],
@@ -19,6 +20,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
+  const hideNavbar = pathname.startsWith("/admin");
+
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -28,6 +33,7 @@ export default function RootLayout({
             <WishlistProvider>
               <Providers>
                 <main className="dark:bg-black min-h-screen">
+                  {!hideNavbar && <Navbar />}
                   {children}
                 </main>
                 <Toaster />
@@ -40,6 +46,6 @@ export default function RootLayout({
   );
 }
 
-export const metadata = {
-  generator: 'v0.app'
-};
+// export const metadata = {
+//   generator: 'v0.app'
+// };

@@ -67,7 +67,7 @@ import { useToast } from '../ui/toaster';
 // ];
 
 export function PopularFoods() {
-  const { addItem, loadCartItem } = useCart();
+  const { addItem, loadCartItem, items } = useCart();
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
   const [dishes, setDishes] = useState([]);
   const { toast } = useToast();
@@ -77,10 +77,11 @@ export function PopularFoods() {
     token = localStorage.getItem('token')
     userId = localStorage.getItem('userId')
   }
+  console.log('items in cart:', items); 
   useEffect(() => {
     const fetchDish = async () => {
       const res = await getDishes();
-      setDishes(res.data.data);
+      setDishes(res.data.data.items);
     }
     fetchDish();
   }, [])
@@ -99,7 +100,7 @@ export function PopularFoods() {
       price: food.price,
       quantity: 1,
       image: food.image,
-      restaurantId: food._id,
+      restaurantId: food.restaurantId,
     });
     setAddedItems(prev => new Set(prev).add(food._id));
     setTimeout(() => {
@@ -127,7 +128,7 @@ export function PopularFoods() {
               key={food._id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              transition={{ duration: 0.2, delay: index * 0.1 }}
               className="dark:bg-zinc-800 card-base overflow-hidden group"
             >
               <div className="relative h-48 overflow-hidden">

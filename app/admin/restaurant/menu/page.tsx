@@ -37,14 +37,10 @@ const dishSchema = z.object({
   dishName: z.string().min(2, 'Dish name must be at least 2 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.string().min(1, 'Category is required'),
-  subCategory: z.string().optional(),
   price: z.number().min(0.01, 'Price must be greater than 0'),
   discountPrice: z.number().optional().nullable(),
-  spiceLevel: z.enum(['mild', 'medium', 'hot']).optional(),
   veg: z.boolean().default(false),
   stockStatus: z.enum(['in-stock', 'out-of-stock']).default('in-stock'),
-  estimatedPrepareTime: z.number().min(1, 'Estimated prepare time is required'),
-  tags: z.string().optional(), // Comma-separated tags
 });
 
 type DishFormValues = z.infer<typeof dishSchema>;
@@ -85,14 +81,10 @@ export default function MenuManagement() {
       dishName: '',
       description: '',
       category: '',
-      subCategory: '',
       price: 0,
       discountPrice: null,
-      spiceLevel: 'mild',
       veg: false,
       stockStatus: 'in-stock',
-      estimatedPrepareTime: 15,
-      tags: '',
     },
   });
 
@@ -112,7 +104,7 @@ export default function MenuManagement() {
       setIsLoading(true);
       const res = await getDishesByRestaurant(restaurantId);
       if (res.data.success && res.data.data) {
-        setDishes(res.data.data);
+        setDishes(res.data.data.items);
       } else {
         // Fallback: Get all dishes and filter (if endpoint doesn't exist)
         const allRes = await getDishes();
@@ -145,14 +137,10 @@ export default function MenuManagement() {
         dishName: dish.name || '',
         description: dish.description || '',
         category: dish.category || '',
-        subCategory: dish.subCategory || '',
         price: dish.price || 0,
         discountPrice: dish.discountPrice || null,
-        spiceLevel: dish.spiceLevel || 'mild',
         veg: dish.veg || false,
         stockStatus: dish.stockStatus || 'in-stock',
-        estimatedPrepareTime: dish.estimatedPrepareTime || 15,
-        tags: dish.tags?.join(', ') || '',
       });
       if (dish.image) setImagePreview(dish.image);
     } else {
@@ -203,17 +191,10 @@ export default function MenuManagement() {
       formData.append('name', data.dishName);
       formData.append('description', data.description);
       formData.append('category', data.category);
-      if (data.subCategory) formData.append('subCategory', data.subCategory);
       formData.append('price', data.price.toString());
       if (data.discountPrice) formData.append('discountPrice', data.discountPrice.toString());
-      if (data.spiceLevel) formData.append('spiceLevel', data.spiceLevel);
       formData.append('veg', data.veg.toString());
       formData.append('stockStatus', data.stockStatus);
-      formData.append('estimatedPrepareTime', data.estimatedPrepareTime.toString());
-      if (data.tags) {
-        const tagsArray = data.tags.split(',').map(t => t.trim()).filter(t => t);
-        formData.append('tags', JSON.stringify(tagsArray));
-      }
       formData.append('restaurantId', restaurantId);
 
       if (imageFile) {
@@ -270,10 +251,6 @@ export default function MenuManagement() {
     }
   };
 
-  const tagPreview = (form.watch('tags') || '')
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter(Boolean);
 
   const isApproved = restaurantStatus === 'approved';
 
@@ -472,87 +449,6 @@ export default function MenuManagement() {
 
                   <div className="dark:bg-zinc-800 card-base p-5 space-y-4">
                     <div>
-                      <p className="text-sm font-semibold text-foreground dark:text-dark-foreground">Dish attributes</p>
-                      <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">
-                        Control dietary badges and availability.
-                      </p>
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="veg"
-                      render={({ field }) => (
-                        <FormItem className="rounded-2xl border border-foreground/10 dark:border-dark-foreground/20 p-4">
-                          <div className="flex items-center justify-between gap-6">
-                            <div>
-                              <FormLabel>Vegetarian</FormLabel>
-                              <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">
-                                Toggle if the dish is vegetarian friendly.
-                              </p>
-                            </div>
-                            <FormControl>
-                              <Switch className='bg-red-400' checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="spiceLevel"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Spice Level</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select level" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent className='bg-white dark:bg-zinc-700 dark:text-white dark:border-none'>
-                                {SPICE_LEVELS.map((level) => (
-                                  <SelectItem key={level.value} value={level.value}>
-                                    {level.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="stockStatus"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Stock Status</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Availability" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent className='bg-white dark:bg-zinc-700 dark:text-white dark:border-none'>
-                                <SelectItem value="in-stock">In Stock</SelectItem>
-                                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="dark:bg-zinc-800 card-base p-5 space-y-4">
-                    <div>
                       <p className="text-sm font-semibold text-foreground dark:text-dark-foreground">Basic details</p>
                       <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">
                         Help diners understand what makes this dish special.
@@ -590,13 +486,72 @@ export default function MenuManagement() {
 
                   <div className="dark:bg-zinc-800 card-base p-5 space-y-4">
                     <div>
+                      <p className="text-sm font-semibold text-foreground dark:text-dark-foreground">Dish attributes</p>
+                      <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">
+                        Control dietary badges
+                      </p>
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="veg"
+                      render={({ field }) => (
+                        <FormItem className="rounded-2xl border border-foreground/10 dark:border-dark-foreground/20 p-4">
+                          <div className="flex items-center justify-between gap-6">
+                            <div>
+                              <FormLabel>Vegetarian</FormLabel>
+                              <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">
+                                Toggle if the dish is vegetarian friendly.
+                              </p>
+                            </div>
+                            <FormControl>
+                              <Switch className='bg-red-400' checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                      <FormField
+                        control={form.control}
+                        name="stockStatus"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Stock Status</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Availability" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className='bg-white dark:bg-zinc-700 dark:text-white dark:border-none'>
+                                <SelectItem value="in-stock">In Stock</SelectItem>
+                                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+
+
+                  <div className="dark:bg-zinc-800 card-base p-5 space-y-4">
+                    <div>
                       <p className="text-sm font-semibold text-foreground dark:text-dark-foreground">Categories & Pricing</p>
                       <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">
                         Organize dishes so customers can filter faster.
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="category"
@@ -635,6 +590,34 @@ export default function MenuManagement() {
                           </FormItem>
                         )}
                       />
+                    </div> */}
+
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} >
+
+                              <FormControl>
+                                <SelectTrigger className='w-full'>
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className='w-full bg-white dark:bg-zinc-700 dark:text-white dark:border-none'>
+                                {CATEGORIES.map((cat) => (
+                                  <SelectItem key={cat} value={cat}>
+                                    {cat}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -649,7 +632,7 @@ export default function MenuManagement() {
                                 type="number"
                                 step="0.01"
                                 {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || '')}
                               />
                             </FormControl>
                             <FormMessage />
@@ -680,26 +663,9 @@ export default function MenuManagement() {
                       />
                     </div>
 
-                    <FormField
-                      control={form.control}
-                      name="estimatedPrepareTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Estimated Prep Time (minutes)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
 
-                  <div className="dark:bg-zinc-800 card-base p-5 space-y-4">
+                  {/* <div className="dark:bg-zinc-800 card-base p-5 space-y-4">
                     <div>
                       <p className="text-sm font-semibold text-foreground dark:text-dark-foreground">Tags & Highlights</p>
                       <p className="text-xs text-foreground-secondary dark:text-dark-foreground-secondary">
@@ -730,7 +696,7 @@ export default function MenuManagement() {
                         ))}
                       </div>
                     )}
-                  </div>
+                  </div> */}
                 </div>
               </div>
 

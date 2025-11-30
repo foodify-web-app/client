@@ -39,8 +39,19 @@ export function Navbar() {
   useEffect(() => {
     const fetchCartItems = async () => {
       const res = await getUserCartItems(userId as string);
-      const data = res.data.data;
-      loadCartItem(data);
+      if (res.data.success && res.data.data) {
+        const cartItems = res.data.data
+          .filter((item: any) => item && item._id)
+          .map((item: any) => ({
+            _id: item._id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity || 1,
+            image: item.image,
+            restaurantId: item.restaurantId,
+          }));
+        loadCartItem(cartItems);
+      }
     }
     if (token != null && userId != null) {
       fetchCartItems();
@@ -100,7 +111,7 @@ export function Navbar() {
               {isAuthenticated ? (
                 <button
                   onClick={logoutHandler}
-                  className="hidden sm:flex items-center gap-2 px-4 py-2 bg-surface dark:bg-dark-surface rounded-full hover:bg-surface-secondary dark:hover:bg-dark-surface-secondary transition-colors"
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 bg-surface dark:text-white dark:bg-zinc-800 rounded-full hover:bg-surface-secondary dark:hover:bg-zinc-700 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
                   <span className="text-sm">Logout</span>
@@ -114,7 +125,7 @@ export function Navbar() {
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="md:hidden p-2"
+                className="md:hidden p-2 dark:text-white"
               >
                 {isOpen ? (
                   <X className="w-6 h-6" />
@@ -154,7 +165,7 @@ export function Navbar() {
               {isAuthenticated && (
                 <button
                   onClick={logoutHandler}
-                  className="w-full px-4 py-2 bg-surface dark:bg-dark-surface rounded-full font-semibold text-left"
+                  className="w-full px-4 py-2 bg-surface dark:text-white dark:bg-zinc-800 dark:hover:bg-zinc-700  rounded-full font-semibold text-left"
                 >
                   Logout
                 </button>

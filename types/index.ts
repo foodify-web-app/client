@@ -51,7 +51,8 @@ export interface DishRes {
   price: number,
   image: string,
   category: string,
-  rating : string
+  rating : string,
+  restaurantId: string
 }
 
 export interface Address {

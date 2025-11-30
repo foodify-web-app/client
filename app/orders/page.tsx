@@ -30,7 +30,7 @@ export default function OrdersPage() {
             setIsLoading(true);
             const res = await getUserOrders(userId);
             if (res.data.success && res.data.data) {
-              setOrders(res.data.data);
+              setOrders(res.data.data.orders);
             }
           } catch (error) {
             console.error('Error loading orders:', error);

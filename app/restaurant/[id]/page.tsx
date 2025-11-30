@@ -28,9 +28,9 @@ export default function RestaurantDetailsPage({ params }: { params: { id: string
       setIsLoading(true);
       const res = await getDishes();
       if (res.data.success && res.data.data) {
-        setMenuItems(res.data.data);
+        setMenuItems(res.data.data.items);
         // Set first category as default
-        const categories = Array.from(new Set(res.data.data.map((item: any) => item.category)));
+        const categories = Array.from(new Set(res.data.data.items.map((item: any) => item.category)));
         if (categories.length > 0) {
           setSelectedCategory(categories[0] as string);
         }

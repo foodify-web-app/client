@@ -24,7 +24,7 @@ export default function CheckoutPage() {
   const deliveryFee = items.length > 0 ? 2 : 0;
   const tax = (subtotal + deliveryFee) * 0.05;
   const total = subtotal + deliveryFee + tax;
-
+  
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
 
